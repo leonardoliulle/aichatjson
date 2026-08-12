@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "entity": "espaco_atendimentos",
+  "requiredFields": [
+    "nomeEspaco",
+    "salas",
+    "turnos",
+    "regras",
+    "alugueisPorTurno",
+    "alugueisPorHora"
+  ],
+  "rules": {
+    "salas": ["Buriti", "Sertão", "Chapada"],
+    "turnos": ["07:00-13:00", "13:00-18:00", "18:00-23:00"],
+    "alugueisPorTurno.status": ["disponivel", "ocupado", "reservado"],
+    "alugueisPorHora.status": ["disponivel", "ocupado", "reservado"]
+  },
+  "fields": {
+    "nomeEspaco": "string",
+    "salas": ["Buriti", "Sertão", "Chapada"],
+    "turnos": [
+      {
+        "nome": "string",
+        "inicio": "string",
+        "fim": "string"
+      }
+    ],
+    "regras": {
+      "umaSalaNaoPodeSerOcupadaNoMesmoHorario": "boolean",
+      "aluguelPorHoraLiberado": "boolean"
+    },
+    "alugueisPorTurno": [
+      {
+        "data": "string",
+        "sala": "string",
+        "turno": "string",
+        "status": "string",
+        "responsavel": "string"
+      }
+    ],
+    "alugueisPorHora": [
+      {
+        "data": "string",
+        "sala": "string",
+        "inicio": "string",
+        "fim": "string",
+        "status": "string",
+        "responsavel": "string"
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "nomeEspaco": "Espaco de Atendimentos",
+  "salas": [
+    "Buriti",
+    "Sertão",
+    "Chapada"
+  ],
+  "turnos": [
+    {
+      "nome": "Manha",
+      "inicio": "07:00",
+      "fim": "13:00"
+    },
+    {
+      "nome": "Tarde",
+      "inicio": "13:00",
+      "fim": "18:00"
+    },
+    {
+      "nome": "Noite",
+      "inicio": "18:00",
+      "fim": "23:00"
+    }
+  ],
+  "regras": {
+    "umaSalaNaoPodeSerOcupadaNoMesmoHorario": true,
+    "aluguelPorHoraLiberado": true
+  },
+  "alugueisPorTurno": [
+    {
+      "data": "próximo sábado",
+      "sala": "Buriti",
+      "turno": "07:00-13:00",
+      "status": "reservado",
+      "responsavel": ""
+    },
+    {
+      "data": "próximo sábado",
+      "sala": "Chapada",
+      "turno": "13:00-18:00",
+      "status": "reservado",
+      "responsavel": ""
+    },
+    {
+      "data": "quarta-feira",
+      "sala": "Sertão",
+      "turno": "07:00-13:00",
+      "status": "ocupado",
+      "responsavel": ""
+    },
+    {
+      "data": "quarta-feira",
+      "sala": "Sertão",
+      "turno": "13:00-18:00",
+      "status": "ocupado",
+      "responsavel": ""
+    },
+    {
+      "data": "quarta-feira",
+      "sala": "Sertão",
+      "turno": "18:00-23:00",
+      "status": "ocupado",
+      "responsavel": ""
+    }
+  ],
+  "alugueisPorHora": []
+}
