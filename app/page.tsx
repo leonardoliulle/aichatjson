@@ -6,7 +6,7 @@ type JsonObject = Record<string, unknown>;
 
 type ThemeMode = "light" | "green" | "dark";
 
-const defaultPrompt = "Reserve the Buriti room for the morning shift and add an hourly rental if needed.";
+const defaultPrompt = "Reserve a sala Buriti para o turno da manhã e adicione uma locação por hora, se necessário.";
 
 const themeStyles: Record<ThemeMode, {
   page: string;
@@ -328,7 +328,7 @@ export default function Home() {
         <section className={`lg:col-span-2 rounded-2xl border p-6 shadow-xl ${activeTheme.card}`}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className={`text-xl font-bold ${activeTheme.text}`}>Gemini prompt By Leonardo Liulle</h3>
+              <h3 className={`text-xl font-bold ${activeTheme.text}`}>AI chat By Leonardo Liulle</h3>
               <p className={`mt-1 text-sm ${activeTheme.mutedText}`}>
                 Escreva sua solicitação em texto simples. Se campos obrigatórios estiverem faltando, o Gemini fará uma pergunta complementar.
               </p>
@@ -364,7 +364,7 @@ export default function Home() {
               className={`rounded-lg px-4 py-2 font-semibold transition disabled:opacity-60 ${activeTheme.buttonPrimary}`}
               disabled={loading}
             >
-              {loading ? "Processando..." : "Enviar para o Gemini"}
+              {loading ? "Processando..." : "Enviar para o AI chat"}
             </button>
             <button
               type="button"
