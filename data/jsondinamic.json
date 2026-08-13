@@ -82,6 +82,27 @@
       "turno": "18:00-23:00",
       "status": "ocupado",
       "responsavel": ""
+    },
+    {
+      "data": "quinta-feira",
+      "sala": "Buriti",
+      "turno": "13:00-18:00",
+      "status": "reservado",
+      "responsavel": ""
+    },
+    {
+      "data": "sexta-feira",
+      "sala": "Buriti",
+      "turno": "13:00-18:00",
+      "status": "reservado",
+      "responsavel": ""
+    },
+    {
+      "data": "sábado",
+      "sala": "Buriti",
+      "turno": "13:00-18:00",
+      "status": "reservado",
+      "responsavel": ""
     }
   ],
   "alugueisPorHora": []

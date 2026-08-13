@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type JsonObject = Record<string, unknown>;
 
 type ThemeMode = "light" | "green" | "dark";
+
+type ChatRole = "user" | "assistant";
+
+type ChatMessage = {
+  id: string;
+  role: ChatRole;
+  content: string;
+  tone?: "default" | "error";
+};
 
 const defaultPrompt = "Reserve a sala Buriti para o turno da manhã e adicione uma locação por hora, se necessário.";
 
@@ -86,18 +95,40 @@ export default function Home() {
   const [staticJson, setStaticJson] = useState<JsonObject>({});
   const [dynamicJson, setDynamicJson] = useState<JsonObject>({});
   const [prompt, setPrompt] = useState(defaultPrompt);
-  const [theme, setTheme] = useState<ThemeMode>("light");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [responseText, setResponseText] = useState("");
-
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem("aichatjson-theme");
-
-    if (storedTheme === "green" || storedTheme === "light" || storedTheme === "dark") {
-      setTheme(storedTheme);
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") {
+      return "light";
     }
 
+    const storedTheme = window.localStorage.getItem("aichatjson-theme");
+
+    return storedTheme === "green" || storedTheme === "light" || storedTheme === "dark"
+      ? storedTheme
+      : "light";
+  });
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  function appendMessage(role: ChatRole, content: string, tone: ChatMessage["tone"] = "default") {
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent) {
+      return;
+    }
+
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      {
+        id: `${role}-${Date.now()}-${currentMessages.length}`,
+        role,
+        content: trimmedContent,
+        tone,
+      },
+    ]);
+  }
+
+  useEffect(() => {
     async function loadData() {
       try {
         const res = await fetch("/api/data");
@@ -105,7 +136,7 @@ export default function Home() {
         setStaticJson(data.staticJson ?? {});
         setDynamicJson(data.dynamicJson ?? {});
       } catch {
-        setError("Could not load JSON files.");
+        appendMessage("assistant", "Could not load JSON files.", "error");
       }
     }
 
@@ -115,6 +146,16 @@ export default function Home() {
   useEffect(() => {
     window.localStorage.setItem("aichatjson-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const chatElement = chatScrollRef.current;
+
+    if (!chatElement) {
+      return;
+    }
+
+    chatElement.scrollTop = chatElement.scrollHeight;
+  }, [messages, loading]);
 
   const activeTheme = themeStyles[theme];
 
@@ -259,15 +300,21 @@ export default function Home() {
   });
 
   async function submitPrompt() {
+    const trimmedPrompt = prompt.trim();
+
+    if (!trimmedPrompt) {
+      appendMessage("assistant", "Type a message before sending.", "error");
+      return;
+    }
+
     setLoading(true);
-    setError("");
-    setResponseText("");
+    appendMessage("user", trimmedPrompt);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, staticJson, dynamicJson }),
+        body: JSON.stringify({ prompt: trimmedPrompt, staticJson, dynamicJson }),
       });
 
       const data = await res.json();
@@ -277,7 +324,10 @@ export default function Home() {
       }
 
       if (data?.requiresInput) {
-        setResponseText(data.summary ?? data.question ?? "Please provide the missing required fields.");
+        appendMessage(
+          "assistant",
+          data.summary ?? data.question ?? "Please provide the missing required fields.",
+        );
         return;
       }
 
@@ -285,10 +335,11 @@ export default function Home() {
         setDynamicJson(data.dynamicJson);
       }
 
-      setResponseText(data.summary ?? "JSON updated successfully.");
+      appendMessage("assistant", data.summary ?? "JSON updated successfully.");
+      setPrompt("");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
+      appendMessage("assistant", message, "error");
     } finally {
       setLoading(false);
     }
@@ -296,7 +347,6 @@ export default function Home() {
 
   async function saveDynamicJson() {
     setLoading(true);
-    setError("");
 
     try {
       const res = await fetch("/api/data", {
@@ -311,10 +361,10 @@ export default function Home() {
         throw new Error(data?.error ?? "Could not save dynamic JSON.");
       }
 
-      setResponseText("Dynamic JSON saved successfully.");
+      appendMessage("assistant", "Dynamic JSON saved successfully.");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
+      appendMessage("assistant", message, "error");
     } finally {
       setLoading(false);
     }
@@ -350,6 +400,46 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          <div
+            ref={chatScrollRef}
+            className={`mb-4 flex max-h-[26rem] min-h-[18rem] flex-col gap-3 overflow-y-auto rounded-2xl border p-4 ${activeTheme.panel}`}
+          >
+            {messages.length === 0 ? (
+              <div className={`m-auto max-w-md text-center text-sm ${activeTheme.mutedText}`}>
+                Your messages stay on the right. AI replies appear on the left here, above the prompt box.
+              </div>
+            ) : null}
+
+            {messages.map((message) => {
+              const isUser = message.role === "user";
+              const bubbleClassName = isUser
+                ? `${activeTheme.buttonPrimary} ml-auto`
+                : message.tone === "error"
+                  ? "mr-auto border border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-200"
+                  : "mr-auto border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200";
+
+              return (
+                <div
+                  key={message.id}
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${bubbleClassName}`}
+                >
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
+                    {isUser ? "You" : message.tone === "error" ? "System" : "AI chat"}
+                  </div>
+                  <p className="whitespace-pre-wrap leading-6">{message.content}</p>
+                </div>
+              );
+            })}
+
+            {loading ? (
+              <div className="mr-auto max-w-[85%] rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 shadow-sm dark:text-emerald-200">
+                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">AI chat</div>
+                <p className="leading-6">Thinking...</p>
+              </div>
+            ) : null}
+          </div>
+
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
@@ -373,19 +463,15 @@ export default function Home() {
             >
               Reset prompt
             </button>
+            <button
+              type="button"
+              onClick={saveDynamicJson}
+              className={`rounded-lg border px-4 py-2 font-medium transition ${activeTheme.buttonSecondary}`}
+              disabled={loading}
+            >
+              Save JSON
+            </button>
           </div>
-
-          {error ? (
-            <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200">
-              {error}
-            </div>
-          ) : null}
-
-          {responseText ? (
-            <div className="mt-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-200">
-              {responseText}
-            </div>
-          ) : null}
         </section>
 
         <section className={`lg:col-span-2 rounded-2xl border p-6 shadow-xl ${activeTheme.card}`}>
