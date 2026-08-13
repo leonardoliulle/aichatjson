@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Dynamic JSON persistence (Vercel Blob)
+
+The dynamic data is stored in Vercel Blob (path `data/jsondinamic.json`) when `BLOB_READ_WRITE_TOKEN` is available.
+
+1. In Vercel, create/connect a Blob store for this project.
+2. Add `BLOB_READ_WRITE_TOKEN` to your project environment variables.
+3. Redeploy.
+
+Behavior:
+
+- In Vercel (token present): reads/writes go to Blob, so data persists across deployments.
+- Local development (token missing): falls back to `data/jsondinamic.json` on disk.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

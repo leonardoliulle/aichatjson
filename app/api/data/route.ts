@@ -1,10 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { readDynamicJson, writeDynamicJson } from "@/lib/dynamic-json-store";
 import { NextResponse } from "next/server";
 
 const dataDir = path.join(process.cwd(), "data");
 const staticPath = path.join(dataDir, "jsonstatic.json");
-const dynamicPath = path.join(dataDir, "jsondinamic.json");
 
 const defaultStaticJson = {
   schemaVersion: 1,
@@ -59,47 +59,13 @@ const defaultStaticJson = {
   },
 };
 
-const defaultDynamicJson = {
-  nomeEspaco: "Espaco de Atendimentos",
-  salas: ["Buriti", "Sertão", "Chapada"],
-  turnos: [
-    {
-      nome: "Manha",
-      inicio: "07:00",
-      fim: "13:00",
-    },
-    {
-      nome: "Tarde",
-      inicio: "13:00",
-      fim: "18:00",
-    },
-    {
-      nome: "Noite",
-      inicio: "18:00",
-      fim: "23:00",
-    },
-  ],
-  regras: {
-    umaSalaNaoPodeSerOcupadaNoMesmoHorario: true,
-    aluguelPorHoraLiberado: true,
-  },
-  alugueisPorTurno: [],
-  alugueisPorHora: [],
-};
-
-async function ensureFiles() {
+async function ensureStaticFile() {
   await fs.mkdir(dataDir, { recursive: true });
 
   try {
     await fs.access(staticPath);
   } catch {
     await fs.writeFile(staticPath, JSON.stringify(defaultStaticJson, null, 2));
-  }
-
-  try {
-    await fs.access(dynamicPath);
-  } catch {
-    await fs.writeFile(dynamicPath, JSON.stringify(defaultDynamicJson, null, 2));
   }
 }
 
@@ -109,18 +75,18 @@ async function readJson(filePath: string) {
 }
 
 export async function GET() {
-  await ensureFiles();
+  await ensureStaticFile();
 
   const [staticJson, dynamicJson] = await Promise.all([
     readJson(staticPath),
-    readJson(dynamicPath),
+    readDynamicJson(),
   ]);
 
   return NextResponse.json({ staticJson, dynamicJson });
 }
 
 export async function POST(request: Request) {
-  await ensureFiles();
+  await ensureStaticFile();
 
   const body = await request.json();
   const dynamicJson = body?.dynamicJson;
@@ -132,7 +98,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await fs.writeFile(dynamicPath, JSON.stringify(dynamicJson, null, 2));
+  await writeDynamicJson(dynamicJson);
 
   return NextResponse.json({ success: true, dynamicJson });
 }

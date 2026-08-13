@@ -1,9 +1,6 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { writeDynamicJson } from "@/lib/dynamic-json-store";
 import { NextResponse } from "next/server";
 
-const dataDir = path.join(process.cwd(), "data");
-const dynamicPath = path.join(dataDir, "jsondinamic.json");
 const geminiEndpointBase = "https://generativelanguage.googleapis.com/v1beta/models";
 const unsupportedModels = new Set([
   "gemini-1.5-flash",
@@ -173,8 +170,7 @@ ${prompt}`;
       throw new Error("Gemini response did not include a valid dynamicJson object.");
     }
 
-    await fs.mkdir(dataDir, { recursive: true });
-    await fs.writeFile(dynamicPath, JSON.stringify(updatedDynamicJson, null, 2));
+    await writeDynamicJson(updatedDynamicJson);
 
     return NextResponse.json({
       success: true,
