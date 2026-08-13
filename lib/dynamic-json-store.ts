@@ -41,7 +41,20 @@ function cloneDefaultDynamicJson() {
 }
 
 function canUseBlob() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(String(process.env.BLOB_READ_WRITE_TOKEN ?? "").trim());
+}
+
+function isBlobNotFoundError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const maybeBlobError = error as Error & { status?: number; statusCode?: number };
+  return (
+    maybeBlobError.name === "BlobNotFoundError" ||
+    maybeBlobError.status === 404 ||
+    maybeBlobError.statusCode === 404
+  );
 }
 
 async function readLocalDynamicJson() {
@@ -63,23 +76,27 @@ export async function readDynamicJson() {
     return readLocalDynamicJson();
   }
 
-  const blobResult = await get(dynamicBlobPathname, {
-    access: "public",
-    useCache: false,
-  });
+  try {
+    const blobResult = await get(dynamicBlobPathname, {
+      access: "public",
+      useCache: false,
+    });
 
-  if (!blobResult) {
+    if (blobResult.statusCode !== 200 || !blobResult.stream) {
+      throw new Error("Failed to read dynamic JSON from Vercel Blob.");
+    }
+
+    const content = await new Response(blobResult.stream).text();
+    return JSON.parse(content) as DynamicJson;
+  } catch (error) {
+    if (!isBlobNotFoundError(error)) {
+      throw error;
+    }
+
     const fallback = await readLocalDynamicJson();
     await writeDynamicJson(fallback);
     return fallback;
   }
-
-  if (blobResult.statusCode !== 200 || !blobResult.stream) {
-    throw new Error("Failed to read dynamic JSON from Vercel Blob.");
-  }
-
-  const content = await new Response(blobResult.stream).text();
-  return JSON.parse(content) as DynamicJson;
 }
 
 export async function writeDynamicJson(dynamicJson: DynamicJson) {
