@@ -61,6 +61,27 @@
       "turno": "18:00-23:00",
       "status": "ocupado",
       "responsavel": ""
+    },
+    {
+      "data": "segunda-feira",
+      "sala": "Sertão",
+      "turno": "07:00-13:00",
+      "status": "reservado",
+      "responsavel": ""
+    },
+    {
+      "data": "segunda-feira",
+      "sala": "Sertão",
+      "turno": "13:00-18:00",
+      "status": "ocupado",
+      "responsavel": ""
+    },
+    {
+      "data": "segunda-feira",
+      "sala": "Sertão",
+      "turno": "18:00-23:00",
+      "status": "ocupado",
+      "responsavel": ""
     }
   ],
   "alugueisPorHora": []

@@ -4,17 +4,100 @@ import { useEffect, useState } from "react";
 
 type JsonObject = Record<string, unknown>;
 
+type ThemeMode = "light" | "green" | "dark";
+
 const defaultPrompt = "Reserve the Buriti room for the morning shift and add an hourly rental if needed.";
+
+const themeStyles: Record<ThemeMode, {
+  page: string;
+  card: string;
+  panel: string;
+  text: string;
+  mutedText: string;
+  border: string;
+  textarea: string;
+  buttonPrimary: string;
+  buttonSecondary: string;
+  statusBadgeOn: string;
+  statusBadgeOff: string;
+  tableHeader: string;
+  tableRow: string;
+  availableCell: string;
+  reservedCell: string;
+  occupiedCell: string;
+}> = {
+  green: {
+    page: "bg-gradient-to-br from-emerald-950 via-slate-950 to-slate-900 text-slate-100",
+    card: "border-emerald-900/60 bg-slate-900/90 shadow-[0_20px_60px_rgba(4,120,87,0.18)]",
+    panel: "border-slate-800 bg-slate-950/80",
+    text: "text-slate-100",
+    mutedText: "text-slate-300",
+    border: "border-slate-700",
+    textarea: "border-emerald-900/50 bg-slate-950 text-slate-100 placeholder:text-slate-500",
+    buttonPrimary: "bg-emerald-600 text-white hover:bg-emerald-500",
+    buttonSecondary: "border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800",
+    statusBadgeOn: "bg-emerald-500/15 text-emerald-300",
+    statusBadgeOff: "bg-amber-500/15 text-amber-300",
+    tableHeader: "text-slate-400",
+    tableRow: "border-slate-800",
+    availableCell: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+    reservedCell: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    occupiedCell: "border-red-500/30 bg-red-500/10 text-red-300",
+  },
+  light: {
+    page: "bg-gradient-to-br from-emerald-50 via-white to-slate-100 text-slate-900",
+    card: "border-emerald-100 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
+    panel: "border-slate-200 bg-white",
+    text: "text-slate-900",
+    mutedText: "text-slate-600",
+    border: "border-slate-200",
+    textarea: "border-emerald-200 bg-white text-slate-900 placeholder:text-slate-400",
+    buttonPrimary: "bg-emerald-600 text-white hover:bg-emerald-500",
+    buttonSecondary: "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+    statusBadgeOn: "bg-emerald-100 text-emerald-700",
+    statusBadgeOff: "bg-amber-100 text-amber-700",
+    tableHeader: "text-slate-500",
+    tableRow: "border-slate-200",
+    availableCell: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    reservedCell: "border-amber-200 bg-amber-50 text-amber-700",
+    occupiedCell: "border-red-200 bg-red-50 text-red-700",
+  },
+  dark: {
+    page: "bg-slate-950 text-slate-100",
+    card: "border-slate-800 bg-slate-900 shadow-[0_20px_60px_rgba(15,23,42,0.3)]",
+    panel: "border-slate-800 bg-slate-950",
+    text: "text-slate-100",
+    mutedText: "text-slate-300",
+    border: "border-slate-700",
+    textarea: "border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-500",
+    buttonPrimary: "bg-emerald-600 text-white hover:bg-emerald-500",
+    buttonSecondary: "border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800",
+    statusBadgeOn: "bg-emerald-500/15 text-emerald-300",
+    statusBadgeOff: "bg-amber-500/15 text-amber-300",
+    tableHeader: "text-slate-400",
+    tableRow: "border-slate-800",
+    availableCell: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+    reservedCell: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    occupiedCell: "border-red-500/30 bg-red-500/10 text-red-300",
+  },
+};
 
 export default function Home() {
   const [staticJson, setStaticJson] = useState<JsonObject>({});
   const [dynamicJson, setDynamicJson] = useState<JsonObject>({});
   const [prompt, setPrompt] = useState(defaultPrompt);
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [responseText, setResponseText] = useState("");
 
   useEffect(() => {
+    const storedTheme = window.localStorage.getItem("aichatjson-theme");
+
+    if (storedTheme === "green" || storedTheme === "light" || storedTheme === "dark") {
+      setTheme(storedTheme);
+    }
+
     async function loadData() {
       try {
         const res = await fetch("/api/data");
@@ -28,6 +111,12 @@ export default function Home() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("aichatjson-theme", theme);
+  }, [theme]);
+
+  const activeTheme = themeStyles[theme];
 
   const roomNames = Array.isArray(dynamicJson.salas) && dynamicJson.salas.length > 0
     ? (dynamicJson.salas as string[])
@@ -232,61 +321,39 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <main className={`min-h-screen p-6 ${activeTheme.page}`}>
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
-        {/* <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Static JSON</h1>
-            <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-xs text-emerald-300">
-              source of truth
-            </span>
+        
+
+        <section className={`lg:col-span-2 rounded-2xl border p-6 shadow-xl ${activeTheme.card}`}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className={`text-xl font-bold ${activeTheme.text}`}>Gemini prompt By Leonardo Liulle</h3>
+              <p className={`mt-1 text-sm ${activeTheme.mutedText}`}>
+                Escreva sua solicitação em texto simples. Se campos obrigatórios estiverem faltando, o Gemini fará uma pergunta complementar.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(["green", "light", "dark"] as ThemeMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setTheme(mode)}
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${
+                    theme === mode
+                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      : activeTheme.buttonSecondary
+                  }`}
+                >
+                  {mode === "green" ? "Green" : mode === "light" ? "White" : "Dark"}
+                </button>
+              ))}
+            </div>
           </div>
-          <pre className="overflow-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-200">
-            {JSON.stringify(staticJson, null, 2)}
-          </pre>
-        </section>
-
-        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Dynamic JSON</h2>
-            <button
-              type="button"
-              onClick={saveDynamicJson}
-              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60"
-              disabled={loading}
-            >
-              Save JSON
-            </button>
-          </div>
-
-          <textarea
-            value={JSON.stringify(dynamicJson, null, 2)}
-            onChange={(event) => {
-              try {
-                const parsed = JSON.parse(event.target.value);
-                if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-                  setDynamicJson(parsed);
-                  setError("");
-                } else {
-                  setError("Dynamic JSON must be a valid object.");
-                }
-              } catch {
-                setError("Invalid JSON syntax in dynamic object.");
-              }
-            }}
-            className="h-72 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 font-mono text-sm text-slate-100 outline-none ring-0"
-          />
-        </section> */}
-
-        <section className="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-          <h3 className="mb-4 text-xl font-bold">Gemini prompt By Leonardo Liulle</h3>
-          <p className="mb-2 text-sm text-slate-300">
-            Write your request in plain text. If required fields are missing, Gemini will ask a follow-up question.
-          </p>
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
-            className="min-h-28 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-slate-100 outline-none"
+            className={`min-h-28 w-full rounded-xl border p-4 outline-none ${activeTheme.textarea}`}
             placeholder="Exemplo: Reserve o Buriti para o próximo sábado, das 07:00 às 13:00."
           />
 
@@ -294,7 +361,7 @@ export default function Home() {
             <button
               type="button"
               onClick={submitPrompt}
-              className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+              className={`rounded-lg px-4 py-2 font-semibold transition disabled:opacity-60 ${activeTheme.buttonPrimary}`}
               disabled={loading}
             >
               {loading ? "Processando..." : "Enviar para o Gemini"}
@@ -302,43 +369,41 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setPrompt(defaultPrompt)}
-              className="rounded-lg border border-slate-700 px-4 py-2 font-medium text-slate-200 hover:bg-slate-800"
+              className={`rounded-lg border px-4 py-2 font-medium transition ${activeTheme.buttonSecondary}`}
             >
               Reset prompt
             </button>
           </div>
 
           {error ? (
-            <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+            <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200">
               {error}
             </div>
           ) : null}
 
           {responseText ? (
-            <div className="mt-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+            <div className="mt-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-200">
               {responseText}
             </div>
           ) : null}
         </section>
 
-        <section className="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+        <section className={`lg:col-span-2 rounded-2xl border p-6 shadow-xl ${activeTheme.card}`}>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</p>
-              <h3 className="text-xl font-bold text-white">Ocupação e disponibilidade das salas no futuro</h3>
+              <p className={`text-xs uppercase tracking-[0.2em] ${activeTheme.mutedText}`}>Status</p>
+              <h3 className={`text-xl font-bold ${activeTheme.text}`}>Ocupação e disponibilidade das salas no futuro</h3>
             </div>
           </div>
 
           <div className="space-y-4 overflow-x-auto pb-2">
             {roomSummary.map(({ room, label, turnoStatus }) => (
-              <div key={room} className="rounded-xl border border-slate-700 bg-slate-950 p-4">
+              <div key={room} className={`rounded-xl border p-4 ${activeTheme.panel}`}>
                 <div className="mb-3 flex items-center justify-between gap-2">
-                  <h4 className="text-lg font-semibold text-slate-100">{room}</h4>
+                  <h4 className={`text-lg font-semibold ${activeTheme.text}`}>{room}</h4>
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      label === "Disponível"
-                        ? "bg-emerald-500/15 text-emerald-300"
-                        : "bg-amber-500/15 text-amber-300"
+                      label === "Disponível" ? activeTheme.statusBadgeOn : activeTheme.statusBadgeOff
                     }`}
                   >
                     {label}
@@ -347,7 +412,7 @@ export default function Home() {
 
                 <div className="min-w-[760px]">
                   <div
-                    className="mb-2 grid gap-2 text-xs uppercase tracking-[0.14em] text-slate-400"
+                    className={`mb-2 grid gap-2 text-xs uppercase tracking-[0.14em] ${activeTheme.tableHeader}`}
                     style={{ gridTemplateColumns: `180px repeat(${futureDates.length}, minmax(90px, 1fr))` }}
                   >
                     <div>Turno</div>
@@ -359,19 +424,19 @@ export default function Home() {
                   {turnoStatus.map(({ name, cells }) => (
                     <div
                       key={`${room}-${name}`}
-                      className="grid gap-2 border-t border-slate-800 py-2"
+                      className={`grid gap-2 border-t py-2 ${activeTheme.tableRow}`}
                       style={{ gridTemplateColumns: `180px repeat(${futureDates.length}, minmax(90px, 1fr))` }}
                     >
-                      <div className="flex items-center text-sm font-medium text-slate-200">{name}</div>
+                      <div className={`flex items-center text-sm font-medium ${activeTheme.text}`}>{name}</div>
                       {cells.map(({ dateKey, status, statusLabel }) => (
                         <div
                           key={`${room}-${name}-${dateKey}`}
                           className={`flex min-h-12 items-center justify-center rounded-lg border px-2 py-2 text-center text-[11px] font-semibold ${
                             status === "disponivel"
-                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                              ? activeTheme.availableCell
                               : status === "reservado"
-                                ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                                : "border-red-500/30 bg-red-500/10 text-red-300"
+                                ? activeTheme.reservedCell
+                                : activeTheme.occupiedCell
                           }`}
                         >
                           {statusLabel}
